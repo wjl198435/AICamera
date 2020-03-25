@@ -1,4 +1,5 @@
 *.pyc 
 debug
 .vscode
-config/config.yml
+build
+#config/config.yml
