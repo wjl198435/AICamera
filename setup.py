@@ -44,6 +44,6 @@ setup(
     url='',
     project_urls={'GitHub': ''},
     classifiers=classifiers,
-    packages=['frigate','frigate.camera','frigate.camera.ezviz'],
+    packages=['frigate','frigate.camera','frigate.camera.ezviz',"frigate.utils"],
     install_requires=['requests']
 )

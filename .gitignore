@@ -2,4 +2,6 @@
 debug
 .vscode
 build
+dist
+frigate.egg-info
 #config/config.yml

@@ -12,14 +12,19 @@ import logging
 from flask import Flask, Response, make_response, jsonify, request
 import paho.mqtt.client as mqtt
 
-
+from frigate.utils.logger import debug, info,setInfo,setDebug,error
 
 from frigate.video import track_camera
 from frigate.object_processing import TrackedObjectProcessor
 from frigate.util import EventsPerSecond
 from frigate.edgetpu import EdgeTPUProcess
 
+from frigate.camera.ezviz import EzvizClient, EzvizCamera
+
 FRIGATE_VARS = {k: v for k, v in os.environ.items() if k.startswith('FRIGATE_')}
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.INFO)
 
 with open('/config/config.yml') as f:
     CONFIG = yaml.safe_load(f)
@@ -101,14 +106,14 @@ class CameraWatchdog(threading.Thread):
 
             if (self.tflite_process.detection_start.value > 0.0 and 
                 datetime.datetime.now().timestamp() - self.tflite_process.detection_start.value > 10):
-                print("Detection appears to be stuck. Restarting detection process")
+                info("Detection appears to be stuck. Restarting detection process")
                 self.tflite_process.start_or_restart()
                 time.sleep(30)
 
             for name, camera_process in self.camera_processes.items():
                 process = camera_process['process']
                 if not process.is_alive():
-                    print(f"Process for {name} is not alive. Starting again...")
+                    info(f"Process for {name} is not alive. Starting again...")
                     camera_process['fps'].value = float(self.config[name]['fps'])
                     camera_process['skipped_fps'].value = 0.0
                     camera_process['detection_fps'].value = 0.0
@@ -118,21 +123,21 @@ class CameraWatchdog(threading.Thread):
                     process.daemon = True
                     camera_process['process'] = process
                     process.start()
-                    print(f"Camera_process started for {name}: {process.pid}")
+                    info(f"Camera_process started for {name}: {process.pid}")
 
 def main():
     # connect to mqtt and setup last will
     def on_connect(client, userdata, flags, rc):
-        print("On connect called")
+        info("On connect called")
         if rc != 0:
             if rc == 3:
-                print ("MQTT Server unavailable")
+                info ("MQTT Server unavailable")
             elif rc == 4:
-                print ("MQTT Bad username or password")
+                info ("MQTT Bad username or password")
             elif rc == 5:
-                print ("MQTT Not authorized")
+                info ("MQTT Not authorized")
             else:
-                print ("Unable to connect to MQTT: Connection refused. Error code: " + str(rc))
+                info ("Unable to connect to MQTT: Connection refused. Error code: " + str(rc))
         # publish a message to signal that the service is running
         client.publish(MQTT_TOPIC_PREFIX+'/available', 'online', retain=True)
     client = mqtt.Client(client_id=MQTT_CLIENT_ID)
@@ -155,10 +160,13 @@ def main():
     ##
     # Setup config defaults for cameras
     ##
-    for name, config in CONFIG['cameras'].items():
-        config['snapshots'] = {
-            'show_timestamp': config.get('snapshots', {}).get('show_timestamp', True)
-        }
+    # info(CONFIG['cameras'])
+    # for camera in CONFIG['cameras']:
+    #     for name, config in camera.items():
+    #         # info(name, config )
+    #         config['snapshots'] = {
+    #             'show_timestamp': config.get('snapshots', {}).get('show_timestamp', True)
+    #         }
 
     # Queue for cameras to push tracked objects to
     tracked_objects_queue = mp.Queue()
@@ -168,21 +176,33 @@ def main():
 
     # start the camera processes
     camera_processes = {}
-    for name, config in CONFIG['cameras'].items():
-        camera_processes[name] = {
-            'fps': mp.Value('d', float(config['fps'])),
-            'skipped_fps': mp.Value('d', 0.0),
-            'detection_fps': mp.Value('d', 0.0)
-        }
-        camera_process = mp.Process(target=track_camera, args=(name, config, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG, 
-            tflite_process.detection_queue, tracked_objects_queue, 
-            camera_processes[name]['fps'], camera_processes[name]['skipped_fps'], camera_processes[name]['detection_fps']))
-        camera_process.daemon = True
-        camera_processes[name]['process'] = camera_process
+    for camera in CONFIG['cameras']:
+        info(camera['platform'])
+
+        for source in camera['source']:
+            deviceSerial = "D77692005"
+            appKey = "e947f6cde1c54ce5b721efa6e929efda"
+            appSecret = "a3f849864180739ddf11227f0b3f3501"
+            ez = EzvizClient(deviceSerial,appKey,appSecret)
+            info(ez.get_access_token())
+            info(ez.get_device_live_address())
+        # for name, config in camera.items():
+        #     info(name, config)
+        #     info("&&&&&&&&")
+            # camera_processes[name] = {
+            #     'fps': mp.Value('d', float(config['fps'])),
+            #     'skipped_fps': mp.Value('d', 0.0),
+            #     'detection_fps': mp.Value('d', 0.0)
+            #     }
+            # camera_process = mp.Process(target=track_camera, args=(name, config, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
+            #     tflite_process.detection_queue, tracked_objects_queue,
+            #     camera_processes[name]['fps'], camera_processes[name]['skipped_fps'], camera_processes[name]['detection_fps']))
+            # camera_process.daemon = True
+            # camera_processes[name]['process'] = camera_process
 
     for name, camera_process in camera_processes.items():
         camera_process['process'].start()
-        print(f"Camera_process started for {name}: {camera_process['process'].pid}")
+        info(f"Camera_process started for {name}: {camera_process['process'].pid}")
     
     object_processor = TrackedObjectProcessor(CONFIG['cameras'], client, MQTT_TOPIC_PREFIX, tracked_objects_queue)
     object_processor.start()
@@ -192,8 +212,7 @@ def main():
 
     # create a flask app that encodes frames a mjpeg on demand
     app = Flask(__name__)
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+
 
     @app.route('/')
     def ishealthy():
@@ -275,4 +294,5 @@ def main():
     plasma_process.terminate()
 
 if __name__ == '__main__':
+    setInfo()
     main()
