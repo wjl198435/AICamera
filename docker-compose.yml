@@ -1,0 +1,32 @@
+frigate:
+  container_name: frigate
+  restart: unless-stopped
+  privileged: true
+  shm_size: '1g' # should work for 5-7 cameras
+  image: blakeblackshear/frigate:stable
+  volumes:
+    - /dev/bus/usb:/dev/bus/usb
+    - /etc/localtime:/etc/localtime:ro
+    - <path_to_config>:/config
+  ports:
+    - "5000:5000"
+  environment:
+    FRIGATE_RTSP_PASSWORD: "password"
+
+
+
+#raspberry: docker run --rm --privileged --shm-size=512m -v /dev/bus/usb:/dev/bus/usb -v /media/nfs/frigate/config:/config:ro -v /etc/localtime:/etc/localtime:ro -p 5000:5000 -e FRIGATE_RTSP_PASSWORD='password' blakeblackshear/frigate:stable
+
+# ubuntu:  docker run --rm --privileged  --shm-size=512m -v /dev/bus/usb:/dev/bus/usb  -v /rpi_nfs/frigate:/work  -v /config:/config:ro  -v /etc/localtime:/etc/localtime:ro  -p 5000:5000 -e FRIGATE_RTSP_PASSWORD='password' blakeblackshear/frigate:stable
+
+#login docker :  docker run -it blakeblackshear/frigate:stable  /bin/bash
+
+docker run -it -v /rpi_nfs/frigate:/work:ro --rm  blakeblackshear/frigate:stable  /bin/bash
+
+
+#  mac:  docker run --rm --privileged  --shm-size=512m -v /dev/bus/usb:/dev/bus/usb  -v /rpi_nfs/frigate/config:/config:ro  -v /etc/localtime:/etc/localtime:ro  -p 5000:5000 -e FRIGATE_RTSP_PASSWORD='password' blakeblackshear/frigate:stable
+
+
+# 文件共享 成功挂载 主机与docker 文件共享
+docker run --name test -it --rm  -v /home/jack/Work/frigate:/opt  -v /home/jack/Work/frigate/config:/config:ro blakeblackshear/frigate:stable  /bin/bash
+python3.7 -u detect_objects.py

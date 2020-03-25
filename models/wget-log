@@ -1,0 +1,13 @@
+--2020-03-24 20:58:37--  https://github.com/google-coral/edgetpu/raw/master/test_data/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite
+正在解析主机 github.com (github.com)... 13.229.188.59
+正在连接 github.com (github.com)|13.229.188.59|:443... 已连接。
+已发出 HTTP 请求，正在等待回应... 302 Found
+位置：https://raw.githubusercontent.com/google-coral/edgetpu/master/test_data/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite [跟随至新的 URL]
+--2020-03-24 20:58:42--  https://raw.githubusercontent.com/google-coral/edgetpu/master/test_data/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite
+正在解析主机 raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.108.133
+正在连接 raw.githubusercontent.com (raw.githubusercontent.com)|151.101.108.133|:443... 已连接。
+已发出 HTTP 请求，正在等待回应... 200 OK
+长度：6948536 (6.6M) [application/octet-stream]
+正在保存至: “mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite”
+
+        mobilenet_s   6%[>                   ] 420.98K  2.79KB/s  剩余 34m 55s        mobilenet_ss   6%[>                   ] 423.67K  3.36KB/s  剩余 34m 55s       mobilenet_ssd   6%[>                   ] 426.37K  3.29KB/s  剩余 34m 55s      mobilenet_ssd_   6%[>                   ] 429.06K  3.23KB/s  剩余 33m 45s     mobilenet_ssd_v   6%[>                   ] 431.76K  3.24KB/s  剩余 33m 51s    mobilenet_ssd_v2   6%[>                   ] 434.28K  4.81KB/s  剩余 33m 51s   mobilenet_ssd_v2_   6%[>                   ] 436.98K  4.86KB/s  剩余 33m 40s  mobilenet_ssd_v2_c   6%[>                   ] 439.67K  4.30KB/s  剩余 33m 50s mobilenet_ssd_v2_co   6%[>                   ] 445.06K  4.04KB/s  剩余 33m 46s obilenet_ssd_v2_coc   6%[>                   ] 447.76K  4.07KB/s  剩余 33m 46s bilenet_ssd_v2_coco   6%[>                   ] 455.76K  4.17KB/s  剩余 33m 18s ilenet_ssd_v2_coco_   6%[>                   ] 471.76K  4.09KB/s  剩余 33m 7s  lenet_ssd_v2_coco_q   7%[>                   ] 485.14K  5.00KB/s  剩余 33m 7s  enet_ssd_v2_coco_qu   7%[>                   ] 487.84K  4.86KB/s  剩余 32m 13s net_ssd_v2_coco_qua   7%[>                   ] 490.53K  4.83KB/s  剩余 32m 13s et_ssd_v2_coco_quan   7%[>                   ] 495.76K  5.14KB/s  剩余 32m 13s t_ssd_v2_coco_quant   7%[>                   ] 498.45K  5.03KB/s  剩余 31m 49s _ssd_v2_coco_quant_   7%[>                   ] 503.84K  5.08KB/s  剩余 31m 49s ssd_v2_coco_quant_p   7%[>                   ] 509.23K  5.86KB/s  剩余 31m 49s sd_v2_coco_quant_po   7%[>                   ] 511.76K  5.76KB/s  剩余 31m 9s  d_v2_coco_quant_pos   7%[>                   ] 519.76K  4.51KB/s  剩余 31m 33s 
