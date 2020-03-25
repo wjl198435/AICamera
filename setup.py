@@ -35,15 +35,15 @@ classifiers = ['Development Status :: 4 - Beta',
 setup(
     name='frigate',
     version='0.0.2',
-    author='Philip Howard',
-    author_email='phil@pimoroni.com',
-    description="""Python library for the bme280 temperature, pressure and humidity sensor""",
+    author='wangjinliang',
+    author_email='wjl198435@163.com',
+    description="""""",
     # long_description=open('README.rst').read() + '\n' + open('CHANGELOG.txt').read(),
     license='MIT',
-    keywords='Raspberry Pi',
-    url='http://www.pimoroni.com',
-    project_urls={'GitHub': 'https://www.github.com/pimoroni/bme680-python'},
+    keywords='Ubuntu ai',
+    url='',
+    project_urls={'GitHub': ''},
     classifiers=classifiers,
-    packages=['frigate'],
-    install_requires=['i2cdevice>=0.0.6']
+    packages=['frigate','frigate.camera','frigate.camera.ezviz'],
+    install_requires=['requests']
 )

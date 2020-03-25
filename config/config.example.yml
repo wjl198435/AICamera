@@ -75,7 +75,8 @@ cameras:
       # Source passed to ffmpeg after the -i parameter. Supports anything compatible with OpenCV and FFmpeg.
       # Environment variables that begin with 'FRIGATE_' may be referenced in {}
       ################
-      input: rtsp://viewer:{FRIGATE_RTSP_PASSWORD}@10.0.10.10:554/cam/realmonitor?channel=1&subtype=2
+#      input: rtsp://viewer:{FRIGATE_RTSP_PASSWORD}@10.0.10.10:554/cam/realmonitor?channel=1&subtype=2
+      input: rtmp://rtmp01open.ys7.com/openlive/67b793d5c8ec4d4fbd55494d36195158
       #################
       # These values will override default values for just this camera
       #################
@@ -108,14 +109,14 @@ cameras:
     # custom framerates. A value of 1 tells frigate to look at every frame, 2 every 2nd frame, 
     # 3 every 3rd frame, etc.
     ################
-    take_frame: 1
+    take_frame: 2
 
     ################
     # The expected framerate for the camera. Frigate will try and ensure it maintains this framerate
     # by dropping frames as necessary. Setting this lower than the actual framerate will allow frigate
     # to process every frame at the expense of realtime processing.
     ################
-    fps: 5
+    fps: 2
 
     ################
     # Configuration for the snapshots in the debug view and mqtt

@@ -111,7 +111,11 @@ def start_or_restart_ffmpeg(ffmpeg_cmd, frame_size, ffmpeg_process=None):
             ffmpeg_process.wait()
 
     print("Creating ffmpeg process...")
+
+
+
     print(" ".join(ffmpeg_cmd))
+    #ffmpeg_cmd = ['ffmpeg', '-hide_banner', '-loglevel', 'panic', '-avoid_negative_ts', 'make_zero', '-fflags', 'nobuffer', '-flags', 'low_delay', '-strict', 'experimental', '-fflags', '+genpts+discardcorrupt', '-vsync', 'drop', '-use_wallclock_as_timestamps', '1', '-i', 'rtmp://rtmp01open.ys7.com/openlive/67b793d5c8ec4d4fbd55494d36195158', '-vf', 'mpdecimate', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:']
     return sp.Popen(ffmpeg_cmd, stdout = sp.PIPE, bufsize=frame_size*10)
 
 def track_camera(name, config, ffmpeg_global_config, global_objects_config, detection_queue, detected_objects_queue, fps, skipped_fps, detection_fps):
@@ -131,6 +135,8 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
             ['-i', ffmpeg_input] +
             ffmpeg_output_args +
             ['pipe:'])
+
+    print(ffmpeg_cmd)
 
     # Merge the tracked object config with the global config
     camera_objects_config = config.get('objects', {})    
@@ -177,7 +183,9 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
     object_tracker = ObjectTracker(10)
     
     ffmpeg_process = start_or_restart_ffmpeg(ffmpeg_cmd, frame_size)
-    
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    print(ffmpeg_process)
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     plasma_client = plasma.connect("/tmp/plasma")
     frame_num = 0
     avg_wait = 0.0

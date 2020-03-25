@@ -126,7 +126,7 @@ class TrackedObjectProcessor(threading.Thread):
             # report on detected objects
             for obj_name, count in obj_counter.items():
                  new_status = 'ON'if count > 0 else 'OFF'
-                if new_status != current_object_status[obj_name]:
+                 if new_status != current_object_status[obj_name]:
                     current_object_status[obj_name] = new_status
                     self.client.publish(f"{self.topic_prefix}/{camera}/{obj_name}", new_status, retain=False)
                     # send the best snapshot over mqtt

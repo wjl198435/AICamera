@@ -77,19 +77,7 @@ FFMPEG_DEFAULT_CONFIG = {
                                       '-pix_fmt', 'rgb24'])
 }
 
-# ffmpeg_cmd = ['ffmpeg',
-#            '-y',
-#            '-f', 'rawvideo',
-#            '-vcodec','rawvideo',
-#            '-pix_fmt', 'bgr24',
-#            '-s', "{}x{}".format(480, 320),
-#            '-r', str(5),
-#            '-i', '-',
-#            '-c:v', 'libx264',
-#            '-pix_fmt', 'yuv420p',
-#            '-preset', 'ultrafast',
-#            '-f', 'flv',
-#            rtmpUrl]
+
 
 GLOBAL_OBJECT_CONFIG = CONFIG.get('objects', {})
 

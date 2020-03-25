@@ -12,3 +12,8 @@ frigate.egg-info/SOURCES.txt
 frigate.egg-info/dependency_links.txt
 frigate.egg-info/requires.txt
 frigate.egg-info/top_level.txt
+frigate/camera/__init__.py
+frigate/camera/ezviz/__init__.py
+frigate/camera/ezviz/__main__.py
+frigate/camera/ezviz/camera.py
+frigate/camera/ezviz/client.py
