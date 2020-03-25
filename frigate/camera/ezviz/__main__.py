@@ -15,3 +15,4 @@ if __name__ == '__main__':
     ez = EzvizClient(deviceSerial,appKey,appSecret)
     print(ez.get_access_token())
     print(ez.get_device_live_address())
+    print(ez.get_device_info())

@@ -8,14 +8,17 @@ import time
 # from .camera import EzvizCamera
 # # from pyezviz.camera import EzvizCamera
 
-# from utils.logger import exception, setDebug, info, debug, error, logToFile, setInfo
+
+from frigate.utils.logger import debug, info,setInfo,setDebug,error
 
 COOKIE_NAME = "sessionId"
 CAMERA_DEVICE_CATEGORY = "IPC"
 
 API_BASE_URI = "https://open.ys7.com"
+
 API_GET_TOKEN = "/api/lapp/token/get"
 API_LIVE_ADDRESS = "/api/lapp/live/address/get"
+API_DEVICE_INFO = "/api/lapp/device/info"
 
 
 API_ENDPOINT_LOGIN = "/v3/users/login"
@@ -31,6 +34,7 @@ API_ENDPOINT_DETECTION_SENSIBILITY_GET = "/api/device/queryAlgorithmConfig"
 
 ACCESS_TOKEN = API_BASE_URI + API_GET_TOKEN
 LIVE_ADDRESS = API_BASE_URI + API_LIVE_ADDRESS
+DEVICE_INFO = API_BASE_URI + API_DEVICE_INFO
 
 LOGIN_URL = API_BASE_URI + API_ENDPOINT_LOGIN
 CLOUDDEVICES_URL = API_BASE_URI + API_ENDPOINT_CLOUDDEVICES
@@ -72,7 +76,7 @@ class EzvizClient(object):
         if self.check_token_is_expired() or self.accessToken is None:
             r = requests.post(ACCESS_TOKEN, data={'appKey':self._appKey,'appSecret':self._appSecret})
             token_result = r.json()
-            print(token_result)
+            debug(token_result)
             if (token_result['code']=='200'):
                 self.accessToken = token_result['data']['accessToken']
                 self.expireTime = token_result['data']['expireTime']
@@ -92,18 +96,38 @@ class EzvizClient(object):
     def get_device_live_address(self,rtmp = "rtmp"):
         r = requests.post(LIVE_ADDRESS, data={'accessToken':self.get_access_token(),'source':self._deviceSerial+":1"})
         # debug("accessToken={},deviceSerial={}".format(self.accessToken,self.deviceSerial))
+        debug(r)
         result = r.json()
         # print(result)
         if (result['code'] == '200'):
             self.live_address = result['data'][0][rtmp]
-            print("live_address={}".format(self.live_address))
+            debug("live_address={}".format(self.live_address))
             return self.live_address
         else:
             raise PyEzvizError("Could not get ezviz device_live_address: Got _deviceSerial= %s  result: %s)",str(self._deviceSerial) ,str(result))
 
+    def get_device_info(self):
+        r = requests.post(DEVICE_INFO, data={'accessToken':self.get_access_token(),'deviceSerial':self._deviceSerial})
+        # debug(LIVE_ADDRESS)
+        # print(self.get_access_token())
+        # print(self._deviceSerial)
+        # print(r)
+        result = r.json()
+        if (result['code'] == '200'):
+            # print(result)
+            return result
+        else:
+            error("Cant get device info deviceSerial: {}".format(self._deviceSerial))
+            return None
 
-
-
+if __name__ == '__main__':
+    deviceSerial = "D77692005"
+    appKey = "e947f6cde1c54ce5b721efa6e929efda"
+    appSecret = "a3f849864180739ddf11227f0b3f3501"
+    ez = EzvizClient(deviceSerial,appKey,appSecret)
+    print(ez.get_access_token())
+    print(ez.get_device_live_address())
+    print(ez.get_device_info())
 
 
     # def __init__(self, account, password, session=None, sessionId=None, timeout=None, cloud=None, connection=None):
