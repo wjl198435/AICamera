@@ -98,6 +98,10 @@ class CameraWatchdog(threading.Thread):
         self.tracked_objects_queue = tracked_objects_queue
         self.object_processor = object_processor
 
+        info(self.config)
+        info(self.config['fps'])
+        info("9999999999999999999")
+
     def run(self):
         time.sleep(10)
         while True:
@@ -176,48 +180,92 @@ def main():
 
     # start the camera_conf processes
     camera_processes = {}
+    object_processors = {}
+
     for camera_conf in CONFIG['cameras']:
         # info(camera_conf['platform'])
 
+        info(camera_conf)
+
         for source in camera_conf['source']:
-            if not 'serial' in source:
-                warn("serial is empty")
-                continue
+            camera = EzvizClient(camera_conf,source['serial'])
+            # info(camera.device_info)
 
-            if camera_conf['platform'] == 'ezviz':
-                deviceSerial = str(source['serial'])
-                appKey = camera_conf['appKey']
-                appSecret =camera_conf['appSecret']
-                info("appKey={} appSecret={}".format(appKey,appSecret))
-                ezclient = EzvizClient(deviceSerial,appKey,appSecret)
-                device_info = ezclient.get_device_info()
-                name = device_info['data']['deviceName']
-                input = ezclient.get_device_live_address()
-
-            camera_processes[name] ={
+            if not camera.device_info is None:
+                name = camera.device_info['deviceName']
+                info(camera_conf['fps'])
+                info(name)
+                info("000000")
+                camera_processes[name] ={
                     'fps': mp.Value('d', float(camera_conf['fps'])),
                     'skipped_fps': mp.Value('d', 0.0),
                     'detection_fps': mp.Value('d', 0.0),
-            }
+                }
 
-            camera_conf['input'] = input
-
-
-            camera_process = mp.Process(target=track_camera, args=(name, camera_conf, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
+                camera_process = mp.Process(target=track_camera, args=(name, camera, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
                 tflite_process.detection_queue, tracked_objects_queue,
                 camera_processes[name]['fps'], camera_processes[name]['skipped_fps'], camera_processes[name]['detection_fps']))
-            camera_process.daemon = True
-            camera_processes[name]['process'] = camera_process
+                camera_process.daemon = True
+                camera_processes[name]['process'] = camera_process
 
-        for name, camera_process in camera_processes.items():
-            camera_process['process'].start()
-            info(f"Camera_process started for {name}: {camera_process['process'].pid}")
-    
-            object_processor = TrackedObjectProcessor(camera_conf, client, MQTT_TOPIC_PREFIX, tracked_objects_queue)
-            object_processor.start()
-    
-            # camera_watchdog = CameraWatchdog(camera_processes, CONFIG['cameras'], tflite_process, tracked_objects_queue, object_processor)
-            # camera_watchdog.start()
+                camera_processes[name]['process'] .start()
+
+                object_processors[name] = TrackedObjectProcessor(camera_conf, client, MQTT_TOPIC_PREFIX, tracked_objects_queue)
+                object_processors[name].start()
+
+        camera_watchdog = CameraWatchdog(camera_processes, camera_conf, tflite_process, tracked_objects_queue, object_processors)
+        camera_watchdog.start()
+
+        #
+        # for source in camera_conf['source']:
+        #     if not 'serial' in source:
+        #         warn("serial is empty")
+        #         continue
+        #
+        #     if camera_conf['platform'] == 'ezviz':
+        #         deviceSerial = str(source['serial'])
+        #         appKey = camera_conf['appKey']
+        #         appSecret =camera_conf['appSecret']
+        #
+        #         ezclient = EzvizClient(deviceSerial,appKey,appSecret)
+        #         device_info = ezclient.get_device_info()
+        #         info("device_info={}".format(device_info))
+        #         if  device_info is None:
+        #             continue
+        #
+        #         name = device_info['data']['deviceName']
+        #         input = ezclient.get_device_live_address()
+        #
+        #     else:
+        #         continue
+        #
+        #     camera_processes[name] ={
+        #             'fps': mp.Value('d', float(camera_conf['fps'])),
+        #             'skipped_fps': mp.Value('d', 0.0),
+        #             'detection_fps': mp.Value('d', 0.0),
+        #     }
+        #
+        #     camera_conf['input'] = input
+        #
+        #
+        #     camera_process = mp.Process(target=track_camera, args=(name, camera_conf, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
+        #         tflite_process.detection_queue, tracked_objects_queue,
+        #         camera_processes[name]['fps'], camera_processes[name]['skipped_fps'], camera_processes[name]['detection_fps']))
+        #     camera_process.daemon = True
+        #     camera_processes[name]['process'] = camera_process
+        #
+        # for name, camera_process in camera_processes.items():
+        #     camera_process['process'].start()
+        #     info(f"Camera_process started for {name}: {camera_process['process'].pid}")
+        #
+        #     object_processor = TrackedObjectProcessor(camera_conf, client, MQTT_TOPIC_PREFIX, tracked_objects_queue)
+        #     object_processor.start()
+        #
+        #     # camera_watchdog = CameraWatchdog(camera_processes, CONFIG['cameras'], tflite_process, tracked_objects_queue, object_processor)
+        #     # camera_watchdog.start()
+        #
+
+
 
     # create a flask app that encodes frames a mjpeg on demand
     app = Flask(__name__)
@@ -259,7 +307,7 @@ def main():
     @app.route('/<camera_name>/<label>/best.jpg')
     def best(camera_name, label):
         if camera_name in CONFIG['cameras']:
-            best_frame = object_processor.get_best(camera_name, label)
+            best_frame = object_processors[camera_name].get_best(camera_name, label)
             if best_frame is None:
                 best_frame = np.zeros((720,1280,3), np.uint8)
             best_frame = cv2.cvtColor(best_frame, cv2.COLOR_RGB2BGR)
@@ -288,7 +336,7 @@ def main():
         while True:
             # max out at specified FPS
             time.sleep(1/fps)
-            frame = object_processor.get_current_frame(camera_name)
+            frame = object_processors[camera_name].get_current_frame(camera_name)
             if frame is None:
                 frame = np.zeros((height,int(height*16/9),3), np.uint8)
 

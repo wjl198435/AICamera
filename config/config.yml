@@ -74,9 +74,10 @@ cameras:
     appSecret: a3f849864180739ddf11227f0b3f3501
     source:
       - serial: "D77692005"
-#      - serial: "22222"
+      - serial: "22222"
 #      - serial: "33333"
     ffmpeg:
+      input: ""
       ################
       # Source passed to ffmpeg after the -i parameter. Supports anything compatible with OpenCV and FFmpeg.
       # Environment variables that begin with 'FRIGATE_' may be referenced in {}
@@ -86,16 +87,17 @@ cameras:
       #################
       # These values will override default values for just this camera
       #################
-      # global_args: []
-      # hwaccel_args: []
-      # input_args: []
-      # output_args: []
+#       global_args: []
+#       hwaccel_args: []
+#       input_args: []
+#       output_args: []
+
 
     ################
     ## Optionally specify the resolution of the video feed. Frigate will try to auto detect if not specified
     ################
-     height: 432
-     width: 768
+#     height: 432
+#     width: 768
 
 #     height: 1280
 #     width: 720

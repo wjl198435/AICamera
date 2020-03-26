@@ -57,22 +57,44 @@ class PyEzvizError(Exception):
 
 
 class EzvizClient(object):
-    def __init__(self,deviceSerial = "", appKey = "", appSecret = ""):
-        self._deviceSerial = deviceSerial
-        self._appKey = appKey
-        self._appSecret = appSecret
+    # def __init__(self,deviceSerial = "", appKey = "", appSecret = ""):
+    #     self._deviceSerial = deviceSerial
+    #     self._appKey = appKey
+    #     self._appSecret = appSecret
+    #
+    #     self.expireTime = 0
+    #     self.accessToken = None
+    #
+    #     self.live_address = None
+
+    def __init__(self,conf,serial):
+        self.camera_conf = conf
+        self._deviceSerial = serial
+        self._appKey = conf['appKey']
+        self._appSecret = conf['appSecret']
+
+        # info("9999999")
+        # info(self._appKey)
+        # info(self._appSecret)
+        # info(serial)
+        # info("9999999")
 
         self.expireTime = 0
         self.accessToken = None
 
         self.live_address = None
+        self.device_info = None
+
+        # self.get_access_token()
+        self.get_device_live_address()
+        self.get_device_info()
+
 
     def __repr__(self):
         return '%s(%r,%s)' % (self.__class__.__name__, self._deviceSerial,self.accessToken )
 
 
     def get_access_token(self):
-
         if self.check_token_is_expired() or self.accessToken is None:
             r = requests.post(ACCESS_TOKEN, data={'appKey':self._appKey,'appSecret':self._appSecret})
             token_result = r.json()
@@ -82,7 +104,8 @@ class EzvizClient(object):
                 self.expireTime = token_result['data']['expireTime']
                 return self.accessToken
             else:
-                raise PyEzvizError("Could not get ezviz access_token: Got appKey= %s : appSecret= %s result: %s)",str(self._appKey), str(self._appSecret),str(token_result))
+                error("Could not get ezviz access_token: Got appKey= %s : appSecret= %s result: %s)",str(self._appKey), str(self._appSecret),str(token_result))
+                return False
         else:
             return self.accessToken
 
@@ -101,24 +124,24 @@ class EzvizClient(object):
         # print(result)
         if (result['code'] == '200'):
             self.live_address = result['data'][0][rtmp]
-            debug("live_address={}".format(self.live_address))
+            # debug("live_address={}".format(self.live_address))
             return self.live_address
         else:
-            raise PyEzvizError("Could not get ezviz device_live_address: Got _deviceSerial= %s  result: %s)",str(self._deviceSerial) ,str(result))
+            error("Could not get ezviz device_live_address: Got _deviceSerial= %s  result: %s)",str(self._deviceSerial) ,str(result))
+            return False
+            # raise
 
     def get_device_info(self):
         r = requests.post(DEVICE_INFO, data={'accessToken':self.get_access_token(),'deviceSerial':self._deviceSerial})
-        # debug(LIVE_ADDRESS)
-        # print(self.get_access_token())
-        # print(self._deviceSerial)
-        # print(r)
         result = r.json()
+        # info(result)
         if (result['code'] == '200'):
             # print(result)
-            return result
+            self.device_info = result['data']
+            return True
         else:
             error("Cant get device info deviceSerial: {}".format(self._deviceSerial))
-            return None
+            return False
 
 if __name__ == '__main__':
     deviceSerial = "D77692005"

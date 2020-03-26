@@ -54,7 +54,7 @@ class TrackedObjectProcessor(threading.Thread):
     def run(self):
         while True:
             camera, frame_time, tracked_objects = self.tracked_objects_queue.get()
-            # debug("{} {} {}".format(camera,frame_time, tracked_objects ))
+            debug("{} {} {}".format(camera,frame_time, tracked_objects ))
             # debug(self.config)
             # delete by wang jin liang
             # config = self.config[camera]

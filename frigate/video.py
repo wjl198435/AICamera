@@ -120,14 +120,17 @@ def start_or_restart_ffmpeg(ffmpeg_cmd, frame_size, ffmpeg_process=None):
     #ffmpeg_cmd = ['ffmpeg', '-hide_banner', '-loglevel', 'panic', '-avoid_negative_ts', 'make_zero', '-fflags', 'nobuffer', '-flags', 'low_delay', '-strict', 'experimental', '-fflags', '+genpts+discardcorrupt', '-vsync', 'drop', '-use_wallclock_as_timestamps', '1', '-i', 'rtmp://rtmp01open.ys7.com/openlive/67b793d5c8ec4d4fbd55494d36195158', '-vf', 'mpdecimate', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:']
     return sp.Popen(ffmpeg_cmd, stdout = sp.PIPE, bufsize=frame_size*10)
 
-def track_camera(name, config, ffmpeg_global_config, global_objects_config, detection_queue, detected_objects_queue, fps, skipped_fps, detection_fps):
+def track_camera(name, camera, ffmpeg_global_config, global_objects_config, detection_queue, detected_objects_queue, fps, skipped_fps, detection_fps):
     info(f"Starting process for {name}: {os.getpid()}")
     # info("name={} config:{} ffmpeg_global_config={} global_objects_config={}  fps={}  skipped_fps={} detection_fps={} ".format(name, config, ffmpeg_global_config, global_objects_config, fps, skipped_fps, detection_fps))
     # Merge the ffmpeg config with the global config
-
+    config = camera.camera_conf
     ffmpeg = config.get('ffmpeg', {})
+    # info(ffmpeg)
     # ffmpeg_input = get_ffmpeg_input(ffmpeg['input'])
-    ffmpeg_input = config['input']
+    ffmpeg_input = camera.live_address
+    # info(camera.live_address)
+    # info("6666666")
     ffmpeg_global_args = ffmpeg.get('global_args', ffmpeg_global_config['global_args'])
     ffmpeg_hwaccel_args = ffmpeg.get('hwaccel_args', ffmpeg_global_config['hwaccel_args'])
     ffmpeg_input_args = ffmpeg.get('input_args', ffmpeg_global_config['input_args'])
@@ -140,7 +143,7 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
             ffmpeg_output_args +
             ['pipe:'])
 
-    info(ffmpeg_cmd)
+    # info(ffmpeg_cmd)
 
     # Merge the tracked object config with the global config
     camera_objects_config = config.get('objects', {})    
