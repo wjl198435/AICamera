@@ -74,7 +74,7 @@ cameras:
     appSecret: a3f849864180739ddf11227f0b3f3501
     source:
       - serial: "D77692005"
-      - serial: "22222"
+      - serial: "839338719"
 #      - serial: "33333"
     ffmpeg:
       input: ""

@@ -310,7 +310,7 @@ def main():
         fps = int(request.args.get('fps', '3'))
         height = int(request.args.get('h', '360'))
         debug(camera_processes[camera_name])
-        if camera_processes[camera_name]:
+        if camera_name in camera_processes and camera_processes[camera_name]:
         # if camera_name in CONFIG['cameras']:
             # return a multipart response
             return Response(imagestream(camera_name, fps, height),
