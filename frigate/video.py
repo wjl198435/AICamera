@@ -156,8 +156,7 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
 
     expected_fps = config['fps']
     take_frame = config.get('take_frame', 1)
-    info("**************************")
-    info("expected_fps={},take_frame={}".format(expected_fps,take_frame))
+
 
     if 'width' in config and 'height' in config:
         frame_shape = (config['height'], config['width'], 3)

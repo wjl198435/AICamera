@@ -12,7 +12,7 @@ import logging
 from flask import Flask, Response, make_response, jsonify, request
 import paho.mqtt.client as mqtt
 
-from frigate.utils.logger import debug, info,setInfo,setDebug,error
+from frigate.utils.logger import debug,warn, info,setInfo,setDebug,error
 
 from frigate.video import track_camera
 from frigate.object_processing import TrackedObjectProcessor
@@ -177,21 +177,23 @@ def main():
     # start the camera_conf processes
     camera_processes = {}
     for camera_conf in CONFIG['cameras']:
-        info(camera_conf['platform'])
+        # info(camera_conf['platform'])
 
         for source in camera_conf['source']:
-            debug(camera_conf)
-            deviceSerial = "D77692005"
-            appKey = "e947f6cde1c54ce5b721efa6e929efda"
-            appSecret = "a3f849864180739ddf11227f0b3f3501"
-            ezclient = EzvizClient(deviceSerial,appKey,appSecret)
-            # info(ez.get_access_token())
-            # info(ez.get_device_live_address())
-            device_info = ezclient.get_device_info()
-            name = device_info['data']['deviceName']
-            # input = ezclient.get_device_live_address("rtmpHd")
-            input = ezclient.get_device_live_address()
-            # debug(device_info['data'])
+            if not 'serial' in source:
+                warn("serial is empty")
+                continue
+
+            if camera_conf['platform'] == 'ezviz':
+                deviceSerial = str(source['serial'])
+                appKey = camera_conf['appKey']
+                appSecret =camera_conf['appSecret']
+                info("appKey={} appSecret={}".format(appKey,appSecret))
+                ezclient = EzvizClient(deviceSerial,appKey,appSecret)
+                device_info = ezclient.get_device_info()
+                name = device_info['data']['deviceName']
+                input = ezclient.get_device_live_address()
+
             camera_processes[name] ={
                     'fps': mp.Value('d', float(camera_conf['fps'])),
                     'skipped_fps': mp.Value('d', 0.0),
@@ -200,16 +202,7 @@ def main():
 
             camera_conf['input'] = input
 
-            # info(ez.get_device_info())
-        # for name, config in camera_conf.items():
-        #     info(name, config)
-        #     info("&&&&&&&&")
-            # camera_processes[name] = {
-            #     'fps': mp.Value('d', float(config['fps'])),
-            #     'skipped_fps': mp.Value('d', 0.0),
-            #     'detection_fps': mp.Value('d', 0.0)
-            #     }
-            info(camera_conf)
+
             camera_process = mp.Process(target=track_camera, args=(name, camera_conf, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
                 tflite_process.detection_queue, tracked_objects_queue,
                 camera_processes[name]['fps'], camera_processes[name]['skipped_fps'], camera_processes[name]['detection_fps']))
@@ -223,8 +216,8 @@ def main():
             object_processor = TrackedObjectProcessor(camera_conf, client, MQTT_TOPIC_PREFIX, tracked_objects_queue)
             object_processor.start()
     
-    # camera_watchdog = CameraWatchdog(camera_processes, CONFIG['cameras'], tflite_process, tracked_objects_queue, object_processor)
-    # camera_watchdog.start()
+            # camera_watchdog = CameraWatchdog(camera_processes, CONFIG['cameras'], tflite_process, tracked_objects_queue, object_processor)
+            # camera_watchdog.start()
 
     # create a flask app that encodes frames a mjpeg on demand
     app = Flask(__name__)

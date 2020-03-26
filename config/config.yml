@@ -70,8 +70,10 @@ objects:
 
 cameras:
   - platform: ezviz
+    appKey: e947f6cde1c54ce5b721efa6e929efda
+    appSecret: a3f849864180739ddf11227f0b3f3501
     source:
-      - serial: "11111"
+      - serial: "D77692005"
 #      - serial: "22222"
 #      - serial: "33333"
     ffmpeg:
