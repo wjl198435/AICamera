@@ -16,7 +16,7 @@ import itertools
 import json
 from collections import defaultdict
 from frigate.util import draw_box_with_label, area, calculate_region, clipped, intersection_over_union, intersection, EventsPerSecond
-from frigate.objects import ObjectTracker
+from frigate.objects_tracker import ObjectTracker
 from frigate.edgetpu import RemoteObjectDetector
 from frigate.motion import MotionDetector
 
