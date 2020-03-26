@@ -98,9 +98,6 @@ class CameraWatchdog(threading.Thread):
         self.tracked_objects_queue = tracked_objects_queue
         self.object_processor = object_processor
 
-        info(self.config)
-        info(self.config['fps'])
-        info("9999999999999999999")
 
     def run(self):
         time.sleep(10)
@@ -118,10 +115,11 @@ class CameraWatchdog(threading.Thread):
                 process = camera_process['process']
                 if not process.is_alive():
                     info(f"Process for {name} is not alive. Starting again...")
-                    camera_process['fps'].value = float(self.config[name]['fps'])
+                    info(camera_process)
+                    camera_process['fps'].value = float(self.config['fps'])
                     camera_process['skipped_fps'].value = 0.0
                     camera_process['detection_fps'].value = 0.0
-                    process = mp.Process(target=track_camera, args=(name, self.config[name], FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG, 
+                    process = mp.Process(target=track_camera, args=(name, camera_process['camera'], FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
                         self.tflite_process.detection_queue, self.tracked_objects_queue, 
                         camera_process['fps'], camera_process['skipped_fps'], camera_process['detection_fps']))
                     process.daemon = True
@@ -161,16 +159,6 @@ def main():
         raise RuntimeError("plasma_store exited unexpectedly with "
                             "code %d" % (rc,))
 
-    ##
-    # Setup config defaults for cameras
-    ##
-    # info(CONFIG['cameras'])
-    # for camera_conf in CONFIG['cameras']:
-    #     for name, config in camera_conf.items():
-    #         # info(name, config )
-    #         config['snapshots'] = {
-    #             'show_timestamp': config.get('snapshots', {}).get('show_timestamp', True)
-    #         }
 
     # Queue for cameras to push tracked objects to
     tracked_objects_queue = mp.Queue()
@@ -185,7 +173,7 @@ def main():
     for camera_conf in CONFIG['cameras']:
         # info(camera_conf['platform'])
 
-        info(camera_conf)
+        # info(camera_conf)
 
         for source in camera_conf['source']:
             camera = EzvizClient(camera_conf,source['serial'])
@@ -193,13 +181,12 @@ def main():
 
             if not camera.device_info is None:
                 name = camera.device_info['deviceName']
-                info(camera_conf['fps'])
-                info(name)
-                info("000000")
+
                 camera_processes[name] ={
                     'fps': mp.Value('d', float(camera_conf['fps'])),
                     'skipped_fps': mp.Value('d', 0.0),
                     'detection_fps': mp.Value('d', 0.0),
+                    'camera': camera
                 }
 
                 camera_process = mp.Process(target=track_camera, args=(name, camera, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,

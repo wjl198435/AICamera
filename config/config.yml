@@ -96,8 +96,8 @@ cameras:
     ################
     ## Optionally specify the resolution of the video feed. Frigate will try to auto detect if not specified
     ################
-#     height: 432
-#     width: 768
+      height: 432
+      width: 768
 
 #     height: 1280
 #     width: 720
