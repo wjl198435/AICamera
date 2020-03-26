@@ -161,8 +161,8 @@ def main():
     # Setup config defaults for cameras
     ##
     # info(CONFIG['cameras'])
-    # for camera in CONFIG['cameras']:
-    #     for name, config in camera.items():
+    # for camera_conf in CONFIG['cameras']:
+    #     for name, config in camera_conf.items():
     #         # info(name, config )
     #         config['snapshots'] = {
     #             'show_timestamp': config.get('snapshots', {}).get('show_timestamp', True)
@@ -174,19 +174,34 @@ def main():
     # Start the shared tflite process
     tflite_process = EdgeTPUProcess()
 
-    # start the camera processes
+    # start the camera_conf processes
     camera_processes = {}
-    for camera in CONFIG['cameras']:
-        info(camera['platform'])
+    for camera_conf in CONFIG['cameras']:
+        info(camera_conf['platform'])
 
-        for source in camera['source']:
+        for source in camera_conf['source']:
+            debug(camera_conf)
             deviceSerial = "D77692005"
             appKey = "e947f6cde1c54ce5b721efa6e929efda"
             appSecret = "a3f849864180739ddf11227f0b3f3501"
-            ez = EzvizClient(deviceSerial,appKey,appSecret)
-            info(ez.get_access_token())
-            info(ez.get_device_live_address())
-        # for name, config in camera.items():
+            ezclient = EzvizClient(deviceSerial,appKey,appSecret)
+            # info(ez.get_access_token())
+            # info(ez.get_device_live_address())
+            device_info = ezclient.get_device_info()
+            name = device_info['data']['deviceName']
+            # input = ezclient.get_device_live_address("rtmpHd")
+            input = ezclient.get_device_live_address()
+            # debug(device_info['data'])
+            camera_processes[name] ={
+                    'fps': mp.Value('d', float(camera_conf['fps'])),
+                    'skipped_fps': mp.Value('d', 0.0),
+                    'detection_fps': mp.Value('d', 0.0),
+            }
+
+            camera_conf['input'] = input
+
+            # info(ez.get_device_info())
+        # for name, config in camera_conf.items():
         #     info(name, config)
         #     info("&&&&&&&&")
             # camera_processes[name] = {
@@ -194,21 +209,22 @@ def main():
             #     'skipped_fps': mp.Value('d', 0.0),
             #     'detection_fps': mp.Value('d', 0.0)
             #     }
-            # camera_process = mp.Process(target=track_camera, args=(name, config, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
-            #     tflite_process.detection_queue, tracked_objects_queue,
-            #     camera_processes[name]['fps'], camera_processes[name]['skipped_fps'], camera_processes[name]['detection_fps']))
-            # camera_process.daemon = True
-            # camera_processes[name]['process'] = camera_process
+            info(camera_conf)
+            camera_process = mp.Process(target=track_camera, args=(name, camera_conf, FFMPEG_DEFAULT_CONFIG, GLOBAL_OBJECT_CONFIG,
+                tflite_process.detection_queue, tracked_objects_queue,
+                camera_processes[name]['fps'], camera_processes[name]['skipped_fps'], camera_processes[name]['detection_fps']))
+            camera_process.daemon = True
+            camera_processes[name]['process'] = camera_process
 
-    for name, camera_process in camera_processes.items():
-        camera_process['process'].start()
-        info(f"Camera_process started for {name}: {camera_process['process'].pid}")
+        for name, camera_process in camera_processes.items():
+            camera_process['process'].start()
+            info(f"Camera_process started for {name}: {camera_process['process'].pid}")
     
-    object_processor = TrackedObjectProcessor(CONFIG['cameras'], client, MQTT_TOPIC_PREFIX, tracked_objects_queue)
-    object_processor.start()
+            object_processor = TrackedObjectProcessor(camera_conf, client, MQTT_TOPIC_PREFIX, tracked_objects_queue)
+            object_processor.start()
     
-    camera_watchdog = CameraWatchdog(camera_processes, CONFIG['cameras'], tflite_process, tracked_objects_queue, object_processor)
-    camera_watchdog.start()
+    # camera_watchdog = CameraWatchdog(camera_processes, CONFIG['cameras'], tflite_process, tracked_objects_queue, object_processor)
+    # camera_watchdog.start()
 
     # create a flask app that encodes frames a mjpeg on demand
     app = Flask(__name__)
@@ -265,7 +281,9 @@ def main():
     def mjpeg_feed(camera_name):
         fps = int(request.args.get('fps', '3'))
         height = int(request.args.get('h', '360'))
-        if camera_name in CONFIG['cameras']:
+        debug(camera_processes[camera_name])
+        if camera_processes[camera_name]:
+        # if camera_name in CONFIG['cameras']:
             # return a multipart response
             return Response(imagestream(camera_name, fps, height),
                             mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -273,6 +291,7 @@ def main():
             return "Camera named {} not found".format(camera_name), 404
 
     def imagestream(camera_name, fps, height):
+
         while True:
             # max out at specified FPS
             time.sleep(1/fps)

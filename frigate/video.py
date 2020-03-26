@@ -20,6 +20,8 @@ from frigate.objects import ObjectTracker
 from frigate.edgetpu import RemoteObjectDetector
 from frigate.motion import MotionDetector
 
+from frigate.utils.logger import debug, info,error
+
 def get_frame_shape(source):
     ffprobe_cmd = " ".join([
         'ffprobe',
@@ -31,14 +33,14 @@ def get_frame_shape(source):
         'json',
         '"'+source+'"'
     ])
-    print(ffprobe_cmd)
+    info(ffprobe_cmd)
     p = sp.Popen(ffprobe_cmd, stdout=sp.PIPE, shell=True)
     (output, err) = p.communicate()
     p_status = p.wait()
-    info = json.loads(output)
-    print(info)
+    output = json.loads(output)
+    info(output)
 
-    video_info = [s for s in info['streams'] if s['codec_type'] == 'video'][0]
+    video_info = [s for s in output['streams'] if s['codec_type'] == 'video'][0]
 
     if video_info['height'] != 0 and video_info['width'] != 0:
         return (video_info['height'], video_info['width'], 3)
@@ -100,30 +102,32 @@ def create_tensor_input(frame, region):
 
 def start_or_restart_ffmpeg(ffmpeg_cmd, frame_size, ffmpeg_process=None):
     if not ffmpeg_process is None:
-        print("Terminating the existing ffmpeg process...")
+        info("Terminating the existing ffmpeg process...")
         ffmpeg_process.terminate()
         try:
-            print("Waiting for ffmpeg to exit gracefully...")
+            info("Waiting for ffmpeg to exit gracefully...")
             ffmpeg_process.wait(timeout=30)
         except sp.TimeoutExpired:
-            print("FFmpeg didnt exit. Force killing...")
+            error("FFmpeg didnt exit. Force killing...")
             ffmpeg_process.kill()
             ffmpeg_process.wait()
 
-    print("Creating ffmpeg process...")
+    info("Creating ffmpeg process...")
 
 
 
-    print(" ".join(ffmpeg_cmd))
+    info(" ".join(ffmpeg_cmd))
     #ffmpeg_cmd = ['ffmpeg', '-hide_banner', '-loglevel', 'panic', '-avoid_negative_ts', 'make_zero', '-fflags', 'nobuffer', '-flags', 'low_delay', '-strict', 'experimental', '-fflags', '+genpts+discardcorrupt', '-vsync', 'drop', '-use_wallclock_as_timestamps', '1', '-i', 'rtmp://rtmp01open.ys7.com/openlive/67b793d5c8ec4d4fbd55494d36195158', '-vf', 'mpdecimate', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:']
     return sp.Popen(ffmpeg_cmd, stdout = sp.PIPE, bufsize=frame_size*10)
 
 def track_camera(name, config, ffmpeg_global_config, global_objects_config, detection_queue, detected_objects_queue, fps, skipped_fps, detection_fps):
-    print(f"Starting process for {name}: {os.getpid()}")
-
+    info(f"Starting process for {name}: {os.getpid()}")
+    # info("name={} config:{} ffmpeg_global_config={} global_objects_config={}  fps={}  skipped_fps={} detection_fps={} ".format(name, config, ffmpeg_global_config, global_objects_config, fps, skipped_fps, detection_fps))
     # Merge the ffmpeg config with the global config
+
     ffmpeg = config.get('ffmpeg', {})
-    ffmpeg_input = get_ffmpeg_input(ffmpeg['input'])
+    # ffmpeg_input = get_ffmpeg_input(ffmpeg['input'])
+    ffmpeg_input = config['input']
     ffmpeg_global_args = ffmpeg.get('global_args', ffmpeg_global_config['global_args'])
     ffmpeg_hwaccel_args = ffmpeg.get('hwaccel_args', ffmpeg_global_config['hwaccel_args'])
     ffmpeg_input_args = ffmpeg.get('input_args', ffmpeg_global_config['input_args'])
@@ -136,7 +140,7 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
             ffmpeg_output_args +
             ['pipe:'])
 
-    print(ffmpeg_cmd)
+    info(ffmpeg_cmd)
 
     # Merge the tracked object config with the global config
     camera_objects_config = config.get('objects', {})    
@@ -152,11 +156,15 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
 
     expected_fps = config['fps']
     take_frame = config.get('take_frame', 1)
+    info("**************************")
+    info("expected_fps={},take_frame={}".format(expected_fps,take_frame))
 
     if 'width' in config and 'height' in config:
         frame_shape = (config['height'], config['width'], 3)
     else:
+
         frame_shape = get_frame_shape(ffmpeg_input)
+        info(frame_shape)
 
     frame_size = frame_shape[0] * frame_shape[1] * frame_shape[2]
 
@@ -183,9 +191,7 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
     object_tracker = ObjectTracker(10)
     
     ffmpeg_process = start_or_restart_ffmpeg(ffmpeg_cmd, frame_size)
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    print(ffmpeg_process)
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+
     plasma_client = plasma.connect("/tmp/plasma")
     frame_num = 0
     avg_wait = 0.0
@@ -203,11 +209,11 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
         if not frame_bytes:
             rc = ffmpeg_process.poll()
             if rc is not None:
-                print(f"{name}: ffmpeg_process exited unexpectedly with {rc}")
+                info(f"{name}: ffmpeg_process exited unexpectedly with {rc}")
                 ffmpeg_process = start_or_restart_ffmpeg(ffmpeg_cmd, frame_size, ffmpeg_process)
                 time.sleep(10)
             else:
-                print(f"{name}: ffmpeg_process is still running but didnt return any bytes")
+                error(f"{name}: ffmpeg_process is still running but didnt return any bytes")
             continue
 
         # limit frame rate
@@ -382,4 +388,4 @@ def track_camera(name, config, ffmpeg_global_config, global_objects_config, dete
         # add to the queue
         detected_objects_queue.put((name, frame_time, object_tracker.tracked_objects))
 
-    print(f"{name}: exiting subprocess")
+    info(f"{name}: exiting subprocess")

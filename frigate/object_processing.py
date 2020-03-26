@@ -12,6 +12,7 @@ import SharedArray as sa
 import matplotlib.pyplot as plt
 from frigate.util import draw_box_with_label
 from frigate.edgetpu import load_labels
+from frigate.utils.logger import debug, info,error
 
 PATH_TO_LABELS = '/labelmap.txt'
 
@@ -45,13 +46,19 @@ class TrackedObjectProcessor(threading.Thread):
             return None
     
     def get_current_frame(self, camera):
+        # debug("8888888")
+        # debug(camera)
+        # debug("8888888")
         return self.camera_data[camera]['current_frame']
 
     def run(self):
         while True:
             camera, frame_time, tracked_objects = self.tracked_objects_queue.get()
+            # debug("{} {} {}".format(camera,frame_time, tracked_objects ))
+            # debug(self.config)
+            # delete by wang jin liang
+            # config = self.config[camera]
 
-            config = self.config[camera]
             best_objects = self.camera_data[camera]['best_objects']
             current_object_status = self.camera_data[camera]['object_status']
             self.camera_data[camera]['tracked_objects'] = tracked_objects
@@ -80,10 +87,12 @@ class TrackedObjectProcessor(threading.Thread):
                     # draw the regions on the frame
                     region = obj['region']
                     cv2.rectangle(current_frame, (region[0], region[1]), (region[2], region[3]), (0,255,0), 1)
-                
-                if config['snapshots']['show_timestamp']:
-                    time_to_show = datetime.datetime.fromtimestamp(frame_time).strftime("%m/%d/%Y %H:%M:%S")
-                    cv2.putText(current_frame, time_to_show, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, fontScale=.8, color=(255, 255, 255), thickness=2)
+
+                # delete by wangjinliang
+
+                # if config['snapshots']['show_timestamp']:
+                #     time_to_show = datetime.datetime.fromtimestamp(frame_time).strftime("%m/%d/%Y %H:%M:%S")
+                #     cv2.putText(current_frame, time_to_show, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, fontScale=.8, color=(255, 255, 255), thickness=2)
 
                 ###
                 # Set the current frame as ready

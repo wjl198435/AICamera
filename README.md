@@ -129,7 +129,10 @@ Models for both CPU and EdgeTPU (Coral) are bundled in the image. You can use yo
 
 ## docker 登陆
 - # 文件共享 成功挂载 主机与docker 文件共享
-- docker run --name frigate -it --shm-size=1024m  --rm  -p 5000:5000 -v /home/jack/Work/frigate:/opt/frigate  -v /home/jack/Work/frigate/config:/config:ro blakeblackshear/frigate:stable  /bin/bash
+- docker run --name frigate -it --shm-size=1024m   -p 5000:5000 -v /home/jack/Work/frigate:/opt/frigate  -v /home/jack/Work/frigate/config:/config:ro blakeblackshear/frigate:stable  /bin/bash
 - python3.7 -u detect_objects.py
+- python3.7 -m pip install requests
+- # 登陆docker容器
+    sudo docker run -it  0ecac23a90e6 /bin/bash
 
 
